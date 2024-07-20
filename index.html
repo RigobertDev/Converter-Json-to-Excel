@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON to Excel Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 50px auto;
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 16px;
+            color: #666;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-right: 10px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #downloadLink {
+            display: none;
+            margin-top: 20px;
+            font-size: 16px;
+            color: #007bff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>JSON to Excel Converter</h1>
+        <div>
+            <label for="jsonFile">Select JSON File:</label>
+            <input type="file" id="jsonFile">
+        </div>
+        <div>
+            <button onclick="convertToExcel()">Convert to Excel</button>
+            <button onclick="convertExcelToJson()">Convert Excel to JSON</button>
+            <button onclick="resetForm()">Reset</button>
+        </div>
+        <div>
+            <a id="downloadLink" style="display: none;">Download Converted File</a>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+    <script>
+        function convertToJson() {
+            const fileInput = document.getElementById('jsonFile');
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(event) {
+                const jsonData = JSON.parse(event.target.result);
+                const jsonContent = JSON.stringify(jsonData, null, 4);
+                const blob = new Blob([jsonContent], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                const link = document.getElementById('downloadLink');
+                link.href = url;
+                link.download = 'data.json';
+                link.style.display = 'block';
+            };
+
+            reader.readAsText(file);
+        }
+
+        function convertToExcel() {
+            const fileInput = document.getElementById('jsonFile');
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(event) {
+                const jsonData = JSON.parse(event.target.result);
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.json_to_sheet(jsonData);
+                XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+                const excelData = XLSX.write(wb, { bookType: 'xls', type: 'array' });
+                const blob = new Blob([excelData], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                const link = document.getElementById('downloadLink');
+                link.href = url;
+                link.download = 'data.xls';
+                link.style.display = 'block';
+            };
+
+            reader.readAsBinaryString(file);
+        }
+
+        function convertExcelToJson() {
+            const fileInput = document.getElementById('jsonFile');
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(event) {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                const jsonContent = JSON.stringify(jsonData, null, 4);
+                const blob = new Blob([jsonContent], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                const link = document.getElementById('downloadLink');
+                link.href = url;
+                link.download = 'data.json';
+                link.style.display = 'block';
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        function resetForm() {
+            document.getElementById('jsonFile').value = '';
+            document.getElementById('downloadLink').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
